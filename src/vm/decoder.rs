@@ -1,4 +1,4 @@
-use crate::command::{AddCommand, Command, FinishCommand, Instruction};
+use crate::vm::command::{AddCommand, Command, FinishCommand, Instruction};
 
 pub fn decode(code: &[u8]) -> Box<dyn Command> {
     assert_eq!(code.len(), 4);

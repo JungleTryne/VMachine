@@ -1,4 +1,4 @@
-use super::memory::VirtualMemory;
+use crate::vm::memory::VirtualMemory;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 pub enum Register {

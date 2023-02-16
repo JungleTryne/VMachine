@@ -1,4 +1,4 @@
-use crate::state::{Register, State};
+use crate::vm::state::{Register, State};
 
 pub enum Instruction {
     ADD,

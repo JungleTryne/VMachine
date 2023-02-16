@@ -1,6 +1,6 @@
-use crate::command::Command;
-use crate::decoder;
-use crate::state::{Register, State};
+use crate::vm::command::Command;
+use crate::vm::decoder;
+use crate::vm::state::{Register, State};
 
 pub struct Controller {
     state: State,
