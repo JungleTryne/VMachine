@@ -1,7 +1,14 @@
 use crate::state::{Register, State};
 
 pub enum Instruction {
-    ADD, SUB, MUL, DIV, JMP, LD, FIN, UNKNOWN
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    JMP,
+    LD,
+    FIN,
+    UNKNOWN,
 }
 
 impl From<u8> for Instruction {
@@ -23,12 +30,11 @@ pub trait Command {
     fn execute(&self, state: &mut State);
 }
 
-
 pub struct FinishCommand;
 
 impl FinishCommand {
     pub fn new() -> Self {
-        FinishCommand{}
+        FinishCommand {}
     }
 }
 
@@ -41,13 +47,13 @@ impl Command for FinishCommand {
 pub struct AddCommand;
 
 impl AddCommand {
-    pub fn new(code: &[u8]) -> Self {
-        AddCommand{}
+    pub fn new(_code: &[u8]) -> Self {
+        AddCommand {}
     }
 }
 
 impl Command for AddCommand {
-    fn execute(&self, state: &mut State) {
+    fn execute(&self, _state: &mut State) {
         todo!()
     }
 }

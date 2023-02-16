@@ -12,13 +12,13 @@ impl VirtualMemory {
         let file = OpenOptions::new()
             .read(true)
             .write(true)
-            .open(image_path).expect("Couldn't open image file");
+            .open(image_path)
+            .expect("Couldn't open image file");
 
-        let mmap_pointer = unsafe {
-            MmapMut::map_mut(&file).expect("Failed to initialize virtual memory")
-        };
+        let mmap_pointer =
+            unsafe { MmapMut::map_mut(&file).expect("Failed to initialize virtual memory") };
 
-        VirtualMemory{
+        VirtualMemory {
             base_pointer: mmap_pointer,
         }
     }
@@ -28,7 +28,7 @@ impl VirtualMemory {
         self.base_pointer[addr]
     }
 
-    pub fn write_addr(&mut self, addr: u32, val: u8) -> () {
+    pub fn write_addr(&mut self, addr: u32, val: u8) {
         let addr = addr as usize;
         self.base_pointer[addr] = val;
     }
@@ -36,14 +36,14 @@ impl VirtualMemory {
     pub fn read_code(&self, addr: u32) -> &[u8] {
         assert_eq!(addr % 4, 0);
         let addr = addr as usize;
-        &self.base_pointer[addr..addr+4]
+        &self.base_pointer[addr..addr + 4]
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use memmap::MmapMut;
     use crate::memory::VirtualMemory;
+    use memmap::MmapMut;
 
     #[test]
     fn it_works() {
@@ -54,8 +54,8 @@ mod tests {
             mmap_pointer[i] = elem;
         }
 
-        let mut memory_handler = VirtualMemory{
-            base_pointer: mmap_pointer
+        let mut memory_handler = VirtualMemory {
+            base_pointer: mmap_pointer,
         };
 
         assert_eq!(memory_handler.read_code(0), [18, 52, 0, 0]);

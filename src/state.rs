@@ -11,7 +11,7 @@ pub enum Register {
 }
 
 pub struct State {
-    memory: VirtualMemory
+    memory: VirtualMemory,
 }
 
 impl State {
@@ -20,7 +20,7 @@ impl State {
     }
 
     pub fn get_register(&self, register: Register) -> u32 {
-        return self.get_register_impl(register as u32);
+        self.get_register_impl(register as u32)
     }
 
     pub fn set_register(&mut self, register: Register, value: u32) {
@@ -29,16 +29,19 @@ impl State {
 
     fn get_register_impl(&self, register_addr: u32) -> u32 {
         let mut buf = self.memory.read_code(register_addr);
-        buf.read_u32::<LittleEndian>().expect(
-            format!("Couldn't read the register with address: {}", register_addr).as_str()
-        )
+        buf.read_u32::<LittleEndian>().unwrap_or_else(|_| {
+            panic!("Couldn't read the register with address: {}", register_addr)
+        })
     }
 
     fn set_register_impl(&mut self, register_addr: u32, value: u32) {
-        let mut wrt = vec![];  // FIXME: It doesn't allow me to use slices
-        wrt.write_u32::<LittleEndian>(value).expect(
-            format!("Couldn't write the register with address: {}", register_addr).as_str()
-        );
+        let mut wrt = vec![]; // FIXME: It doesn't allow me to use slices
+        wrt.write_u32::<LittleEndian>(value).unwrap_or_else(|_| {
+            panic!(
+                "Couldn't write the register with address: {}",
+                register_addr
+            )
+        });
         for (index, byte) in wrt.iter().enumerate() {
             self.memory.write_addr(register_addr + index as u32, *byte);
         }

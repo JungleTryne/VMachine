@@ -8,9 +8,7 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(state: State) -> Self {
-        Controller {
-            state,
-        }
+        Controller { state }
     }
 
     pub fn execute(&mut self) {
