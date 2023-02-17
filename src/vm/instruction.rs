@@ -32,10 +32,8 @@ impl InstructionType {
 }
 
 /// # Trait *Instruction*
-/// Represents instruction of the architecture
-/// [execute] method is responsible for changing the state
-/// of the machine, that is why it is given the mutable
-/// reference to it
+/// Represents instruction of the virtual machine
+/// [execute] method is responsible for executing the instruction
 pub trait Instruction {
     fn execute(&self, controller: &mut Controller);
 }
@@ -43,8 +41,6 @@ pub trait Instruction {
 /// # FinishInstruction
 /// Final instruction that stops the execution of the virtual machine
 /// Sets value of the [END] register to 1, thus stops the pipeline.
-/// Also, it changes [IP] register to initial value so that the image is
-/// reusable
 ///
 /// Structure
 /// - 1st byte: instruction code
@@ -67,15 +63,10 @@ impl FinishInstruction {
 impl Instruction for FinishInstruction {
     fn execute(&self, controller: &mut Controller) {
         controller.get_mut_state().set_register(Register::END, 1);
-        let ip_value = controller.get_finish_ip_value() - 4; // TODO: Make global architecture variable
-        controller
-            .get_mut_state()
-            .set_register(Register::IP, ip_value);
     }
 }
 
 /// # AddInstruction
-///
 /// Sums two numbers in given registers
 ///
 /// Structure:
@@ -245,11 +236,12 @@ impl Instruction for DivInstruction {
 }
 
 /// # OutInstruction
-/// Prints character that is stored in a given register
+/// Prints string the address of which is stored in
+/// a given register
 ///
 /// Structure
 /// - 1st byte: instruction code
-/// - 2nd byte: char to print
+/// - 2nd byte: register with address to the string
 /// - 3rd byte: not used
 /// - 4th byte: not used
 pub struct OutInstruction {
@@ -271,12 +263,18 @@ impl OutInstruction {
 
 impl Instruction for OutInstruction {
     fn execute(&self, controller: &mut Controller) {
-        let state = controller.get_mut_state();
-        let char_value =
-            char::from_u32(state.get_register(self.register)).expect("Invalid char in register");
-
-        let display = controller.get_mut_display();
-        display.print(char_value);
+        let mut address = controller.get_mut_state().get_register(self.register);
+        loop {
+            let char = controller
+                .get_mut_state()
+                .get_memory_handler()
+                .read_byte(address) as char;
+            if char == '\0' {
+                break;
+            }
+            controller.get_mut_display().print(char);
+            address += 1;
+        }
     }
 }
 
@@ -316,11 +314,10 @@ impl Instruction for LoadInstruction {
         let ip_value = controller.get_mut_state().get_register(Register::IP);
         let address = ip_value + self.offset as u32;
 
-        // TODO: Endianness? Works on MacOS though because it's little-endian.
         let value = controller
             .get_mut_state()
             .get_memory_handler()
-            .read_addr(address) as u32;
+            .read_byte(address) as u32;
 
         controller
             .get_mut_state()

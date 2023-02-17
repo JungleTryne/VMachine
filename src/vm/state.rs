@@ -1,4 +1,5 @@
 use crate::vm::memory::VirtualMemory;
+use crate::vm::ARCH_BYTES;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 #[derive(Copy, Clone, Debug)]
@@ -11,26 +12,28 @@ pub enum Register {
     END,
 }
 
+#[allow(clippy::erasing_op)]
+#[allow(clippy::identity_op)]
 impl Register {
     pub fn get_addr(&self) -> u32 {
         match self {
-            Register::IP => 0,
-            Register::R0 => 4,
-            Register::R1 => 8,
-            Register::R2 => 12,
-            Register::R3 => 16,
-            Register::END => 24,
+            Register::IP => 0 * ARCH_BYTES,
+            Register::R0 => 1 * ARCH_BYTES,
+            Register::R1 => 2 * ARCH_BYTES,
+            Register::R2 => 3 * ARCH_BYTES,
+            Register::R3 => 4 * ARCH_BYTES,
+            Register::END => 5 * ARCH_BYTES,
         }
     }
 
     pub fn from_addr(addr: u32) -> Self {
         match addr {
-            0 => Register::IP,
-            4 => Register::R0,
-            8 => Register::R1,
-            12 => Register::R2,
-            16 => Register::R3,
-            24 => Register::END,
+            addr if addr == 0 * ARCH_BYTES => Register::IP,
+            addr if addr == 1 * ARCH_BYTES => Register::R0,
+            addr if addr == 2 * ARCH_BYTES => Register::R1,
+            addr if addr == 3 * ARCH_BYTES => Register::R2,
+            addr if addr == 4 * ARCH_BYTES => Register::R3,
+            addr if addr == 5 * ARCH_BYTES => Register::END,
             _ => panic!("Invalid register address"),
         }
     }
@@ -54,7 +57,7 @@ impl State {
     }
 
     fn get_register_impl(&self, register_addr: u32) -> u32 {
-        let mut buf = self.memory.read_code(register_addr);
+        let mut buf = self.memory.read_word(register_addr);
         buf.read_u32::<LittleEndian>().unwrap_or_else(|_| {
             panic!("Couldn't read the register with address: {}", register_addr)
         })
@@ -69,7 +72,7 @@ impl State {
             )
         });
         for (index, byte) in wrt.iter().enumerate() {
-            self.memory.write_addr(register_addr + index as u32, *byte);
+            self.memory.write_byte(register_addr + index as u32, *byte);
         }
     }
 

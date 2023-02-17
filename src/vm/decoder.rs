@@ -2,9 +2,10 @@ use crate::vm::instruction::{
     AddInstruction, FinishInstruction, Instruction, InstructionType, LoadInstruction,
     MulInstruction, OutInstruction, SubInstruction,
 };
+use crate::vm::ARCH_BYTES;
 
 pub fn decode(code: &[u8]) -> Box<dyn Instruction> {
-    assert_eq!(code.len(), 4);
+    assert_eq!(code.len(), ARCH_BYTES as usize);
 
     let coded_command = InstructionType::from_byte(code[0]);
 

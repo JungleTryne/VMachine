@@ -2,6 +2,7 @@ use std::fs::OpenOptions;
 use std::path::Path;
 
 use memmap::MmapMut;
+use crate::vm::ARCH_BYTES;
 
 pub struct VirtualMemory {
     base_pointer: MmapMut,
@@ -23,20 +24,20 @@ impl VirtualMemory {
         }
     }
 
-    pub fn read_addr(&self, addr: u32) -> u8 {
+    pub fn read_byte(&self, addr: u32) -> u8 {
         let addr = addr as usize;
         self.base_pointer[addr]
     }
 
-    pub fn write_addr(&mut self, addr: u32, val: u8) {
+    pub fn write_byte(&mut self, addr: u32, val: u8) {
         let addr = addr as usize;
         self.base_pointer[addr] = val;
     }
 
-    pub fn read_code(&self, addr: u32) -> &[u8] {
-        assert_eq!(addr % 4, 0);
+    pub fn read_word(&self, addr: u32) -> &[u8] {
+        assert_eq!(addr % ARCH_BYTES, 0, "The instruction is not aligned");
         let addr = addr as usize;
-        &self.base_pointer[addr..addr + 4]
+        &self.base_pointer[addr..(addr + ARCH_BYTES as usize)]
     }
 }
 
@@ -58,11 +59,11 @@ mod tests {
             base_pointer: mmap_pointer,
         };
 
-        assert_eq!(memory_handler.read_code(0), [18, 52, 0, 0]);
+        assert_eq!(memory_handler.read_word(0), [18, 52, 0, 0]);
 
-        memory_handler.write_addr(5, 12);
-        assert_eq!(memory_handler.read_addr(5), 12);
+        memory_handler.write_byte(5, 12);
+        assert_eq!(memory_handler.read_byte(5), 12);
 
-        memory_handler.write_addr(5, 0);
+        memory_handler.write_byte(5, 0);
     }
 }
