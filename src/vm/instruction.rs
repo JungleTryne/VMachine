@@ -1,5 +1,6 @@
 use crate::vm::controller::Controller;
 use crate::vm::state::Register;
+use byteorder::{ByteOrder, LittleEndian};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum InstructionType {
@@ -41,7 +42,10 @@ pub trait Instruction {
 
 /// # FinishInstruction
 /// Final instruction that stops the execution of the virtual machine
-/// Sets value of the [END] register to 1, thus stops the pipeline
+/// Sets value of the [END] register to 1, thus stops the pipeline.
+/// Also, it changes [IP] register to initial value so that the image is
+/// reusable
+///
 /// Structure
 /// - 1st byte: instruction code
 /// - 2nd byte: not used
@@ -63,6 +67,10 @@ impl FinishInstruction {
 impl Instruction for FinishInstruction {
     fn execute(&self, controller: &mut Controller) {
         controller.get_mut_state().set_register(Register::END, 1);
+        let ip_value = controller.get_finish_ip_value() - 4; // TODO: Make global architecture variable
+        controller
+            .get_mut_state()
+            .set_register(Register::IP, ip_value);
     }
 }
 
@@ -238,6 +246,12 @@ impl Instruction for DivInstruction {
 
 /// # OutInstruction
 /// Prints character that is stored in a given register
+///
+/// Structure
+/// - 1st byte: instruction code
+/// - 2nd byte: char to print
+/// - 3rd byte: not used
+/// - 4th byte: not used
 pub struct OutInstruction {
     register: Register,
 }
@@ -263,5 +277,53 @@ impl Instruction for OutInstruction {
 
         let display = controller.get_mut_display();
         display.print(char_value);
+    }
+}
+
+/// # LoadInstruction
+/// Loads value from address [ip + offset],
+/// [offset] is parsed as i16 little endian
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: destination [register]
+/// - 3rd byte: offset
+/// - 4th byte: offset
+///
+/// Result is stored in [register]
+pub struct LoadInstruction {
+    register: Register,
+    offset: i16,
+}
+
+impl LoadInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        assert_eq!(
+            InstructionType::from_byte(code[0]),
+            InstructionType::LD,
+            "Invalid code of instruction"
+        );
+
+        LoadInstruction {
+            register: Register::from_addr(code[1] as u32),
+            offset: LittleEndian::read_i16(&code[2..4]),
+        }
+    }
+}
+
+impl Instruction for LoadInstruction {
+    fn execute(&self, controller: &mut Controller) {
+        let ip_value = controller.get_mut_state().get_register(Register::IP);
+        let address = ip_value + self.offset as u32;
+
+        // TODO: Endianness? Works on MacOS though because it's little-endian.
+        let value = controller
+            .get_mut_state()
+            .get_memory_handler()
+            .read_addr(address) as u32;
+
+        controller
+            .get_mut_state()
+            .set_register(self.register, value);
     }
 }

@@ -1,6 +1,6 @@
 use crate::vm::instruction::{
-    AddInstruction, FinishInstruction, Instruction, InstructionType, MulInstruction,
-    OutInstruction, SubInstruction,
+    AddInstruction, FinishInstruction, Instruction, InstructionType, LoadInstruction,
+    MulInstruction, OutInstruction, SubInstruction,
 };
 
 pub fn decode(code: &[u8]) -> Box<dyn Instruction> {
@@ -15,6 +15,7 @@ pub fn decode(code: &[u8]) -> Box<dyn Instruction> {
         InstructionType::DIV => Box::new(SubInstruction::new(code)),
         InstructionType::FIN => Box::new(FinishInstruction::new(code)),
         InstructionType::OUT => Box::new(OutInstruction::new(code)),
+        InstructionType::LD => Box::new(LoadInstruction::new(code)),
         _ => panic!("Invalid instruction"),
     }
 }
