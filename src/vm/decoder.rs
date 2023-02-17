@@ -1,4 +1,4 @@
-use crate::vm::command::{
+use crate::vm::instruction::{
     AddInstruction, FinishInstruction, Instruction, InstructionType, MulInstruction,
     OutInstruction, SubInstruction,
 };

@@ -1,4 +1,4 @@
-pub mod command;
+pub mod instruction;
 pub mod controller;
 pub mod decoder;
 pub mod display;

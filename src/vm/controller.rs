@@ -1,4 +1,4 @@
-use crate::vm::command::Instruction;
+use crate::vm::instruction::Instruction;
 use crate::vm::decoder;
 use crate::vm::display::{Display, SystemDisplay};
 use crate::vm::state::{Register, State};
