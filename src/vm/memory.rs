@@ -42,7 +42,7 @@ impl VirtualMemory {
 
 #[cfg(test)]
 mod tests {
-    use crate::memory::VirtualMemory;
+    use crate::VirtualMemory;
     use memmap::MmapMut;
 
     #[test]
