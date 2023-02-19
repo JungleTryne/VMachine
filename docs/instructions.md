@@ -17,22 +17,24 @@ addresses mentioned above.
 
 It also provides a basic set of the following instructions:
 
-| Instruction | Code | Corresponding class     |
-|-------------|------|-------------------------|
-| `ADD`       | 0x1  | AddInstruction          |
-| `SUB`       | 0x2  | SubInstruction          |
-| `MUL`       | 0x3  | MulInstruction          |
-| `DIV`       | 0x4  | DivInstruction          |
-| `JMP`       | 0x5  | JumpInstruction         |
-| `LD`        | 0x6  | LoadInstruction         |
-| `FIN`       | 0x7  | FinishInstruction       |
-| `OUT`       | 0x8  | OutInstruction          |
-| `EQ`        | 0x9  | EqualInstruction        |
-| `L`         | 0xA  | LessInstruction         |
-| `LE`        | 0xB  | LessEqualInstruction    |
-| `LDA`       | 0xC  | LoadAbsoluteInstruction |
-| `INP`       | 0xD  | InputInstruction        |
-| `JCMP`      | 0xE  | JumpCompareInstruction  |
+| Instruction | Code | Corresponding class        |
+|-------------|------|----------------------------|
+| `ADD`       | 0x01 | AddInstruction             |
+| `SUB`       | 0x02 | SubInstruction             |
+| `MUL`       | 0x03 | MulInstruction             |
+| `DIV`       | 0x04 | DivInstruction             |
+| `JMP`       | 0x05 | JumpInstruction            |
+| `LD`        | 0x06 | LoadInstruction            |
+| `FIN`       | 0x07 | FinishInstruction          |
+| `OUT`       | 0x08 | OutInstruction             |
+| `EQ`        | 0x09 | EqualInstruction           |
+| `L`         | 0x0A | LessInstruction            |
+| `LE`        | 0x0B | LessEqualInstruction       |
+| `LDA`       | 0x0C | LoadAbsoluteInstruction    |
+| `INP`       | 0x0D | InputInstruction           |
+| `JCMP`      | 0x0E | JumpCompareInstruction     |
+| `JNCMP`     | 0x0F | JumpNotCompareInstruction  |
+| `OUTR`      | 0x10 | OutFromRegisterInstruction |
 
 
 Each instruction is 32-bit and has unique rules of decoding. To get all information about

@@ -59,7 +59,7 @@ impl Controller {
 
     fn step(&mut self) {
         let instruction = self.fetch();
-        let command = decode(instruction);
+        let mut command = decode(instruction);
         command.execute(self);
         if command.move_ip() {
             self.next();

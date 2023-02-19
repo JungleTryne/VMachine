@@ -18,7 +18,9 @@ register_instructions! {
     0x0B => LessEqualInstruction,
     0x0C => LoadAbsoluteInstruction,
     0x0D => InputInstruction,
-    0x0E => JumpCompareInstruction
+    0x0E => JumpCompareInstruction,
+    0x0F => JumpNotCompareInstruction,
+    0x10 => OutFromRegisterInstruction
 }
 
 /// # Trait *Instruction*
@@ -27,7 +29,7 @@ register_instructions! {
 /// [move_ip] returns true, if after instruction execution the ip
 /// register needs to be incremented.
 pub trait Instruction {
-    fn execute(&self, controller: &mut Controller);
+    fn execute(&mut self, controller: &mut Controller);
     fn move_ip(&self) -> bool {
         true
     }
@@ -59,7 +61,7 @@ impl AddInstruction {
 }
 
 impl Instruction for AddInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let state = controller.mut_state();
         let first_value = state.register(self.first_register);
         let second_value = state.register(self.second_register);
@@ -95,7 +97,7 @@ impl SubInstruction {
 }
 
 impl Instruction for SubInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let state = controller.mut_state();
         let first_value = state.register(self.first_register);
         let second_value = state.register(self.second_register);
@@ -131,7 +133,7 @@ impl MulInstruction {
 }
 
 impl Instruction for MulInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let state = controller.mut_state();
         let first_value = state.register(self.first_register);
         let second_value = state.register(self.second_register);
@@ -168,7 +170,7 @@ impl DivInstruction {
 }
 
 impl Instruction for DivInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let state = controller.mut_state();
 
         let first_value = state.register(self.first_register);
@@ -209,9 +211,9 @@ impl JumpInstruction {
 }
 
 impl Instruction for JumpInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let ip_value = controller.state().register(Register::IP);
-        let address = ip_value + self.offset as u32;
+        let address = (ip_value as i32 + self.offset as i32) as u32;
         controller.mut_state().set_register(Register::IP, address);
     }
 
@@ -247,7 +249,7 @@ impl LoadInstruction {
 }
 
 impl Instruction for LoadInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let ip_value = controller.state().register(Register::IP);
         let address = ip_value + self.offset as u32;
 
@@ -279,7 +281,7 @@ impl FinishInstruction {
 }
 
 impl Instruction for FinishInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         controller.mut_state().set_register(Register::END, 1);
     }
 
@@ -311,7 +313,7 @@ impl OutInstruction {
 }
 
 impl Instruction for OutInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let mut address = controller.state().register(self.register);
         loop {
             let char = controller.state().get_memory_handler().read_byte(address) as char;
@@ -351,7 +353,7 @@ impl EqualInstruction {
 }
 
 impl Instruction for EqualInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let left_value = controller.state().register(self.left);
         let right_value = controller.state().register(self.right);
         controller
@@ -386,7 +388,7 @@ impl LessInstruction {
 }
 
 impl Instruction for LessInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let left_value = controller.state().register(self.left);
         let right_value = controller.state().register(self.right);
         controller
@@ -421,7 +423,7 @@ impl LessEqualInstruction {
 }
 
 impl Instruction for LessEqualInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let left_value = controller.state().register(self.left);
         let right_value = controller.state().register(self.right);
         controller
@@ -455,7 +457,7 @@ impl LoadAbsoluteInstruction {
 }
 
 impl Instruction for LoadAbsoluteInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         controller
             .mut_state()
             .set_register(self.register, self.value);
@@ -485,7 +487,7 @@ impl InputInstruction {
 }
 
 impl Instruction for InputInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         let c = controller.mut_display().get();
         controller.mut_state().set_register(self.register, c as u32);
     }
@@ -503,27 +505,99 @@ impl Instruction for InputInstruction {
 ///
 pub struct JumpCompareInstruction {
     offset: i16,
+    success: bool,
 }
 
 impl JumpCompareInstruction {
     pub fn new(code: &[u8]) -> Self {
         JumpCompareInstruction {
             offset: LittleEndian::read_i16(&code[1..=2]),
+            success: true,
         }
     }
 }
 
 impl Instruction for JumpCompareInstruction {
-    fn execute(&self, controller: &mut Controller) {
+    fn execute(&mut self, controller: &mut Controller) {
         if controller.state().register(Register::CMP) == 0 {
+            self.success = false;
             return;
         }
         let ip_value = controller.state().register(Register::IP);
-        let address = ip_value + self.offset as u32;
+        let address = (ip_value as i32 + self.offset as i32) as u32;
         controller.mut_state().set_register(Register::IP, address);
     }
 
     fn move_ip(&self) -> bool {
-        false
+        !self.success
+    }
+}
+
+/// # JumpNotCompareInstruction
+/// Moves [IP] register by the [offset] if [CMP] flag
+/// is zero [offset] is parsed as little endian i16
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: offset
+/// - 3rd byte: offset
+/// - 4th byte: not used
+///
+pub struct JumpNotCompareInstruction {
+    offset: i16,
+    success: bool,
+}
+
+impl JumpNotCompareInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        JumpNotCompareInstruction {
+            offset: LittleEndian::read_i16(&code[1..=2]),
+            success: true,
+        }
+    }
+}
+
+impl Instruction for JumpNotCompareInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        if controller.state().register(Register::CMP) != 0 {
+            self.success = false;
+            return;
+        }
+        let ip_value = controller.state().register(Register::IP);
+        let address = (ip_value as i32 + self.offset as i32) as u32;
+        controller.mut_state().set_register(Register::IP, address);
+    }
+
+    fn move_ip(&self) -> bool {
+        !self.success
+    }
+}
+
+/// # OutFromRegisterInstruction
+/// Prints char that is stored in the [register]
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: [register] address
+/// - 3rd byte: not used
+/// - 4th byte: not used
+///
+pub struct OutFromRegisterInstruction {
+    register: Register
+}
+
+impl OutFromRegisterInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        OutFromRegisterInstruction {
+            register: Register::from_addr(code[1] as u32)
+        }
+    }
+}
+
+impl Instruction for OutFromRegisterInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        let value = char::from_u32(controller.state().register(self.register))
+            .expect("Expected char to be in register");
+        controller.display().print(value);
     }
 }
