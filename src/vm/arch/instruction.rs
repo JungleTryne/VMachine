@@ -39,7 +39,7 @@ pub trait Instruction {
 /// Structure:
 /// - 1st byte: instruction code
 /// - 2nd byte: [first_register] address
-/// - 3rd byte: [second_register address
+/// - 3rd byte: [second_register] address
 /// - 4th byte: not used
 ///
 /// Result is stored in the [first_register]
@@ -75,7 +75,7 @@ impl Instruction for AddInstruction {
 /// Structure:
 /// - 1st byte: instruction code
 /// - 2nd byte: [first_register] address
-/// - 3rd byte: [second_register address
+/// - 3rd byte: [second_register] address
 /// - 4th byte: not used
 ///
 /// Result is stored in the [first_register]
@@ -111,7 +111,7 @@ impl Instruction for SubInstruction {
 /// Structure:
 /// - 1st byte: instruction code
 /// - 2nd byte: [first_register] address
-/// - 3rd byte: [second_register address
+/// - 3rd byte: [second_register] address
 /// - 4th byte: not used
 ///
 /// Result is stored in the [first_register]
@@ -147,7 +147,7 @@ impl Instruction for MulInstruction {
 /// Structure:
 /// - 1st byte: instruction code
 /// - 2nd byte: [first_register] address
-/// - 3rd byte: [second_register address
+/// - 3rd byte: [second_register] address
 /// - 4th byte: not used
 ///
 /// Result of division is stored in the [first_register],
@@ -261,7 +261,7 @@ impl Instruction for LoadInstruction {
 }
 
 /// # FinishInstruction
-/// Final instruction that stops the execution of the virtual machine
+/// Final instruction that stops the execution of the virtual machine.
 /// Sets value of the [END] register to 1, thus stops the pipeline.
 ///
 /// Structure
@@ -289,8 +289,8 @@ impl Instruction for FinishInstruction {
 }
 
 /// # OutInstruction
-/// Prints string the address of which is stored
-/// in a given register
+/// Prints string from the address, which is stored
+/// in a given register.
 ///
 /// Structure
 /// - 1st byte: instruction code
@@ -471,6 +471,7 @@ impl Instruction for LoadAbsoluteInstruction {
 /// - 2nd byte: [register] address
 /// - 3rd byte: not used
 /// - 4th byte: not used
+///
 pub struct InputInstruction {
     register: Register,
 }

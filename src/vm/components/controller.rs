@@ -4,7 +4,7 @@ use crate::vm::arch::ARCH_BYTES;
 use crate::vm::arch::instruction::decode;
 
 /// # Controller
-/// Simulates controller component of the virtual machine
+/// Simulates controller component of the virtual machine.
 /// Stores the state of the machine and changes it
 /// by executing given instructions.
 ///
