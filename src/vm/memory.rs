@@ -1,9 +1,12 @@
 use std::fs::OpenOptions;
 use std::path::Path;
 
-use memmap::MmapMut;
 use crate::vm::ARCH_BYTES;
+use memmap::MmapMut;
 
+/// # Virtual Memory
+/// Simulates memory of the machine.
+/// Maps given image file to the host memory using mmap.
 pub struct VirtualMemory {
     base_pointer: MmapMut,
 }
@@ -35,7 +38,7 @@ impl VirtualMemory {
     }
 
     pub fn read_word(&self, addr: u32) -> &[u8] {
-        assert_eq!(addr % ARCH_BYTES, 0, "The instruction is not aligned");
+        assert_eq!(addr % ARCH_BYTES, 0, "The word address is not aligned");
         let addr = addr as usize;
         &self.base_pointer[addr..(addr + ARCH_BYTES as usize)]
     }

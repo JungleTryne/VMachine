@@ -1,6 +1,6 @@
 use crate::vm::instruction::{
-    AddInstruction, FinishInstruction, Instruction, InstructionType, LoadInstruction,
-    MulInstruction, OutInstruction, SubInstruction,
+    AddInstruction, FinishInstruction, Instruction, InstructionType, JumpInstruction,
+    LoadInstruction, MulInstruction, OutInstruction, SubInstruction,
 };
 use crate::vm::ARCH_BYTES;
 
@@ -17,6 +17,7 @@ pub fn decode(code: &[u8]) -> Box<dyn Instruction> {
         InstructionType::FIN => Box::new(FinishInstruction::new(code)),
         InstructionType::OUT => Box::new(OutInstruction::new(code)),
         InstructionType::LD => Box::new(LoadInstruction::new(code)),
+        InstructionType::JMP => Box::new(JumpInstruction::new(code)),
         _ => panic!("Invalid instruction"),
     }
 }

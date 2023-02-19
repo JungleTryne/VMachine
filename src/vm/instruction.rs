@@ -9,9 +9,12 @@ pub enum InstructionType {
     MUL,
     DIV,
     JMP,
-    OUT,
     LD,
     FIN,
+    OUT,
+    EQ,
+    LE,
+    LEQ,
     UNKNOWN,
 }
 
@@ -26,6 +29,9 @@ impl InstructionType {
             0x6 => InstructionType::LD,
             0x7 => InstructionType::FIN,
             0x8 => InstructionType::OUT,
+            0x9 => InstructionType::EQ,
+            0xA => InstructionType::LE,
+            0xB => InstructionType::LEQ,
             _ => InstructionType::UNKNOWN,
         }
     }
@@ -62,7 +68,7 @@ impl FinishInstruction {
 
 impl Instruction for FinishInstruction {
     fn execute(&self, controller: &mut Controller) {
-        controller.get_mut_state().set_register(Register::END, 1);
+        controller.mut_state().set_register(Register::END, 1);
     }
 }
 
@@ -97,9 +103,9 @@ impl AddInstruction {
 
 impl Instruction for AddInstruction {
     fn execute(&self, controller: &mut Controller) {
-        let state = controller.get_mut_state();
-        let first_value = state.get_register(self.first_register);
-        let second_value = state.get_register(self.second_register);
+        let state = controller.mut_state();
+        let first_value = state.register(self.first_register);
+        let second_value = state.register(self.second_register);
         let result = first_value + second_value;
         state.set_register(self.first_register, result);
     }
@@ -137,9 +143,9 @@ impl SubInstruction {
 
 impl Instruction for SubInstruction {
     fn execute(&self, controller: &mut Controller) {
-        let state = controller.get_mut_state();
-        let first_value = state.get_register(self.first_register);
-        let second_value = state.get_register(self.second_register);
+        let state = controller.mut_state();
+        let first_value = state.register(self.first_register);
+        let second_value = state.register(self.second_register);
         let result = first_value - second_value;
         state.set_register(self.first_register, result);
     }
@@ -177,9 +183,9 @@ impl MulInstruction {
 
 impl Instruction for MulInstruction {
     fn execute(&self, controller: &mut Controller) {
-        let state = controller.get_mut_state();
-        let first_value = state.get_register(self.first_register);
-        let second_value = state.get_register(self.second_register);
+        let state = controller.mut_state();
+        let first_value = state.register(self.first_register);
+        let second_value = state.register(self.second_register);
         let result = first_value * second_value;
         state.set_register(self.first_register, result);
     }
@@ -218,10 +224,10 @@ impl DivInstruction {
 
 impl Instruction for DivInstruction {
     fn execute(&self, controller: &mut Controller) {
-        let state = controller.get_mut_state();
+        let state = controller.mut_state();
 
-        let first_value = state.get_register(self.first_register);
-        let second_value = state.get_register(self.second_register);
+        let first_value = state.register(self.first_register);
+        let second_value = state.register(self.second_register);
 
         assert_ne!(
             second_value, 0,
@@ -263,16 +269,16 @@ impl OutInstruction {
 
 impl Instruction for OutInstruction {
     fn execute(&self, controller: &mut Controller) {
-        let mut address = controller.get_mut_state().get_register(self.register);
+        let mut address = controller.state().register(self.register);
         loop {
             let char = controller
-                .get_mut_state()
+                .state()
                 .get_memory_handler()
                 .read_byte(address) as char;
             if char == '\0' {
                 break;
             }
-            controller.get_mut_display().print(char);
+            controller.display().print(char);
             address += 1;
         }
     }
@@ -304,23 +310,150 @@ impl LoadInstruction {
 
         LoadInstruction {
             register: Register::from_addr(code[1] as u32),
-            offset: LittleEndian::read_i16(&code[2..4]),
+            offset: LittleEndian::read_i16(&code[2..=3]),
         }
     }
 }
 
 impl Instruction for LoadInstruction {
     fn execute(&self, controller: &mut Controller) {
-        let ip_value = controller.get_mut_state().get_register(Register::IP);
+        let ip_value = controller.state().register(Register::IP);
         let address = ip_value + self.offset as u32;
 
         let value = controller
-            .get_mut_state()
+            .mut_state()
             .get_memory_handler()
             .read_byte(address) as u32;
 
         controller
-            .get_mut_state()
+            .mut_state()
             .set_register(self.register, value);
+    }
+}
+
+/// # JumpInstruction
+/// Moves [IP] register by the [offset]
+/// [offset] is parsed as little endian i16
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: offset
+/// - 3rd byte: offset
+/// - 4th byte: not used
+pub struct JumpInstruction {
+    offset: i16,
+}
+
+impl JumpInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        assert_eq!(
+            InstructionType::from_byte(code[0]),
+            InstructionType::JMP,
+            "Invalid code of instruction"
+        );
+
+        JumpInstruction {
+            offset: LittleEndian::read_i16(&code[1..=2]),
+        }
+    }
+}
+
+impl Instruction for JumpInstruction {
+    fn execute(&self, controller: &mut Controller) {
+        let ip_value = controller.state().register(Register::IP);
+        let address = ip_value + self.offset as u32;
+        controller
+            .mut_state()
+            .set_register(Register::IP, address);
+    }
+}
+
+pub struct EqualInstruction {
+    left: Register,
+    right: Register,
+}
+
+impl EqualInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        assert_eq!(
+            InstructionType::from_byte(code[0]),
+            InstructionType::EQ,
+            "Invalid code of instruction"
+        );
+
+        EqualInstruction {
+            left: Register::from_addr(code[1] as u32),
+            right: Register::from_addr(code[2] as u32),
+        }
+    }
+}
+
+impl Instruction for EqualInstruction {
+    fn execute(&self, controller: &mut Controller) {
+        let left_value = controller.state().register(self.left);
+        let right_value = controller.state().register(self.right);
+        controller
+            .mut_state()
+            .set_register(Register::CMP, (left_value == right_value) as u32);
+    }
+}
+
+pub struct LessInstruction {
+    left: Register,
+    right: Register,
+}
+
+impl LessInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        assert_eq!(
+            InstructionType::from_byte(code[0]),
+            InstructionType::LE,
+            "Invalid code of instruction"
+        );
+
+        LessInstruction {
+            left: Register::from_addr(code[1] as u32),
+            right: Register::from_addr(code[2] as u32),
+        }
+    }
+}
+
+impl Instruction for LessInstruction {
+    fn execute(&self, controller: &mut Controller) {
+        let left_value = controller.state().register(self.left);
+        let right_value = controller.state().register(self.right);
+        controller
+            .mut_state()
+            .set_register(Register::CMP, (left_value < right_value) as u32);
+    }
+}
+
+pub struct LessEqualInstruction {
+    left: Register,
+    right: Register,
+}
+
+impl LessEqualInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        assert_eq!(
+            InstructionType::from_byte(code[0]),
+            InstructionType::LE,
+            "Invalid code of instruction"
+        );
+
+        LessEqualInstruction {
+            left: Register::from_addr(code[1] as u32),
+            right: Register::from_addr(code[2] as u32),
+        }
+    }
+}
+
+impl Instruction for LessEqualInstruction {
+    fn execute(&self, controller: &mut Controller) {
+        let left_value = controller.state().register(self.left);
+        let right_value = controller.state().register(self.right);
+        controller
+            .mut_state()
+            .set_register(Register::CMP, (left_value <= right_value) as u32);
     }
 }

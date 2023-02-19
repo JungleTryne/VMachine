@@ -9,13 +9,14 @@ pub enum Register {
     R1,
     R2,
     R3,
+    CMP,
     END,
 }
 
 #[allow(clippy::erasing_op)]
 #[allow(clippy::identity_op)]
 impl Register {
-    pub fn get_addr(&self) -> u32 {
+    pub fn as_addr(&self) -> u32 {
         match self {
             Register::IP => 0 * ARCH_BYTES,
             Register::R0 => 1 * ARCH_BYTES,
@@ -23,6 +24,7 @@ impl Register {
             Register::R2 => 3 * ARCH_BYTES,
             Register::R3 => 4 * ARCH_BYTES,
             Register::END => 5 * ARCH_BYTES,
+            Register::CMP => 6 * ARCH_BYTES,
         }
     }
 
@@ -34,11 +36,13 @@ impl Register {
             addr if addr == 3 * ARCH_BYTES => Register::R2,
             addr if addr == 4 * ARCH_BYTES => Register::R3,
             addr if addr == 5 * ARCH_BYTES => Register::END,
+            addr if addr == 6 * ARCH_BYTES => Register::CMP,
             _ => panic!("Invalid register address"),
         }
     }
 }
 
+/// # Machine State
 pub struct State {
     memory: VirtualMemory,
 }
@@ -48,12 +52,12 @@ impl State {
         State { memory }
     }
 
-    pub fn get_register(&self, register: Register) -> u32 {
-        self.get_register_impl(register.get_addr())
+    pub fn register(&self, register: Register) -> u32 {
+        self.get_register_impl(register.as_addr())
     }
 
     pub fn set_register(&mut self, register: Register, value: u32) {
-        self.set_register_impl(register.get_addr(), value);
+        self.set_register_impl(register.as_addr(), value);
     }
 
     fn get_register_impl(&self, register_addr: u32) -> u32 {
@@ -76,7 +80,7 @@ impl State {
         }
     }
 
-    pub fn get_memory_handler(&mut self) -> &mut VirtualMemory {
-        &mut self.memory
+    pub fn get_memory_handler(&self) -> &VirtualMemory {
+        &self.memory
     }
 }
