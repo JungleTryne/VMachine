@@ -48,6 +48,10 @@ impl Controller {
         self.display.as_ref()
     }
 
+    pub fn mut_display(&mut self) -> &mut dyn Display {
+        self.display.as_mut()
+    }
+
     fn reset_machine(&mut self) {
         self.state.set_register(Register::IP, self.initial_ip_value);
         self.state.set_register(Register::END, 0);

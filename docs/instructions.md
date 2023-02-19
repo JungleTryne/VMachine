@@ -31,6 +31,9 @@ It also provides a basic set of the following instructions:
 | `L`         | 0xA  | LessInstruction         |
 | `LE`        | 0xB  | LessEqualInstruction    |
 | `LDA`       | 0xC  | LoadAbsoluteInstruction |
+| `INP`       | 0xD  | InputInstruction        |
+| `JCMP`      | 0xE  | JumpCompareInstruction  |
+
 
 Each instruction is 32-bit and has unique rules of decoding. To get all information about
 a specific instruction please refer to code documentation of the corresponding class

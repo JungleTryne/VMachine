@@ -16,7 +16,9 @@ register_instructions! {
     0x09 => EqualInstruction,
     0x0A => LessInstruction,
     0x0B => LessEqualInstruction,
-    0x0C => LoadAbsoluteInstruction
+    0x0C => LoadAbsoluteInstruction,
+    0x0D => InputInstruction,
+    0x0E => JumpCompareInstruction
 }
 
 /// # Trait *Instruction*
@@ -193,6 +195,7 @@ impl Instruction for DivInstruction {
 /// - 2nd byte: offset
 /// - 3rd byte: offset
 /// - 4th byte: not used
+///
 pub struct JumpInstruction {
     offset: i16,
 }
@@ -456,5 +459,70 @@ impl Instruction for LoadAbsoluteInstruction {
         controller
             .mut_state()
             .set_register(self.register, self.value);
+    }
+}
+
+/// # InputInstruction
+/// Gets a character from the user
+/// and stores it in [register].
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: [register] address
+/// - 3rd byte: not used
+/// - 4th byte: not used
+pub struct InputInstruction {
+    register: Register,
+}
+
+impl InputInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        InputInstruction {
+            register: Register::from_addr(code[1] as u32),
+        }
+    }
+}
+
+impl Instruction for InputInstruction {
+    fn execute(&self, controller: &mut Controller) {
+        let c = controller.mut_display().get();
+        controller.mut_state().set_register(self.register, c as u32);
+    }
+}
+
+/// # JumpCompareInstruction
+/// Moves [IP] register by the [offset] if [CMP] flag
+/// is not zero [offset] is parsed as little endian i16
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: offset
+/// - 3rd byte: offset
+/// - 4th byte: not used
+///
+pub struct JumpCompareInstruction {
+    offset: i16,
+}
+
+impl JumpCompareInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        JumpCompareInstruction {
+            offset: LittleEndian::read_i16(&code[1..=2]),
+        }
+    }
+}
+
+impl Instruction for JumpCompareInstruction {
+    fn execute(&self, controller: &mut Controller) {
+        if controller.state().register(Register::CMP) == 0 {
+            return;
+        }
+        let ip_value = controller.state().register(Register::IP);
+        let address = ip_value + self.offset as u32;
+        controller.mut_state().set_register(Register::IP, address);
+    }
+
+    fn move_ip(&self) -> bool {
+        false
     }
 }
