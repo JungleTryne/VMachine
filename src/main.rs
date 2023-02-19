@@ -1,6 +1,6 @@
-use crate::vm::controller::Controller;
-use crate::vm::memory::VirtualMemory;
-use crate::vm::state::State;
+use crate::vm::components::controller::Controller;
+use crate::vm::components::memory::VirtualMemory;
+use vm::components::state::State;
 
 pub mod vm;
 

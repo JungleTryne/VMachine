@@ -1,5 +1,5 @@
-use crate::vm::controller::Controller;
-use crate::vm::state::Register;
+use crate::vm::components::controller::Controller;
+use crate::vm::components::state::Register;
 use byteorder::{ByteOrder, LittleEndian};
 
 /// # Trait *Instruction*

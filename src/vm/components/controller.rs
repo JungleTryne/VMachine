@@ -1,6 +1,6 @@
-use crate::vm::display::{Display, SystemDisplay};
-use crate::vm::state::{Register, State};
-use crate::vm::{decoder, ARCH_BYTES};
+use crate::vm::components::display::{Display, SystemDisplay};
+use crate::vm::components::state::{Register, State};
+use crate::vm::arch::{ARCH_BYTES, decoder};
 
 /// # Controller
 /// Simulates controller component of the virtual machine

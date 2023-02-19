@@ -1,7 +1,7 @@
 use std::fs::OpenOptions;
 use std::path::Path;
 
-use crate::vm::ARCH_BYTES;
+use crate::vm::arch::ARCH_BYTES;
 use memmap::MmapMut;
 
 /// # Virtual Memory

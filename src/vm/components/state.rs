@@ -1,45 +1,16 @@
-use crate::vm::memory::VirtualMemory;
-use crate::vm::ARCH_BYTES;
+use crate::vm::components::memory::VirtualMemory;
+use crate::vm::arch::ARCH_BYTES;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use crate::vm::utils::register_macro::make_registers;
 
-#[derive(Copy, Clone, Debug)]
-pub enum Register {
-    IP,
-    R0,
-    R1,
-    R2,
-    R3,
-    CMP,
-    END,
-}
-
-#[allow(clippy::erasing_op)]
-#[allow(clippy::identity_op)]
-impl Register {
-    pub fn as_addr(&self) -> u32 {
-        match self {
-            Register::IP => 0 * ARCH_BYTES,
-            Register::R0 => 1 * ARCH_BYTES,
-            Register::R1 => 2 * ARCH_BYTES,
-            Register::R2 => 3 * ARCH_BYTES,
-            Register::R3 => 4 * ARCH_BYTES,
-            Register::END => 5 * ARCH_BYTES,
-            Register::CMP => 6 * ARCH_BYTES,
-        }
-    }
-
-    pub fn from_addr(addr: u32) -> Self {
-        match addr {
-            addr if addr == 0 * ARCH_BYTES => Register::IP,
-            addr if addr == 1 * ARCH_BYTES => Register::R0,
-            addr if addr == 2 * ARCH_BYTES => Register::R1,
-            addr if addr == 3 * ARCH_BYTES => Register::R2,
-            addr if addr == 4 * ARCH_BYTES => Register::R3,
-            addr if addr == 5 * ARCH_BYTES => Register::END,
-            addr if addr == 6 * ARCH_BYTES => Register::CMP,
-            _ => panic!("Invalid register address"),
-        }
-    }
+make_registers! {
+    IP => 0 * ARCH_BYTES,
+    R0 => 1 * ARCH_BYTES,
+    R1 => 2 * ARCH_BYTES,
+    R2 => 3 * ARCH_BYTES,
+    R3 => 4 * ARCH_BYTES,
+    CMP => 5 * ARCH_BYTES,
+    END => 6 * ARCH_BYTES
 }
 
 /// # Machine State
