@@ -56,7 +56,9 @@ impl Controller {
         let instruction = self.fetch();
         let command = decoder::decode(instruction);
         command.execute(self);
-        self.next();
+        if command.move_ip() {
+            self.next();
+        }
     }
 
     fn next(&mut self) {

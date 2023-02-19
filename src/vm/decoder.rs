@@ -1,5 +1,6 @@
 use crate::vm::instruction::{
-    AddInstruction, FinishInstruction, Instruction, InstructionType, JumpInstruction,
+    AddInstruction, DivInstruction, EqualInstruction, FinishInstruction, Instruction,
+    JumpInstruction, LessEqualInstruction, LessInstruction, LoadAbsoluteInstruction,
     LoadInstruction, MulInstruction, OutInstruction, SubInstruction,
 };
 use crate::vm::ARCH_BYTES;
@@ -7,17 +8,21 @@ use crate::vm::ARCH_BYTES;
 pub fn decode(code: &[u8]) -> Box<dyn Instruction> {
     assert_eq!(code.len(), ARCH_BYTES as usize);
 
-    let coded_command = InstructionType::from_byte(code[0]);
+    let instruction_code = code[0];
 
-    match coded_command {
-        InstructionType::ADD => Box::new(AddInstruction::new(code)),
-        InstructionType::SUB => Box::new(SubInstruction::new(code)),
-        InstructionType::MUL => Box::new(MulInstruction::new(code)),
-        InstructionType::DIV => Box::new(SubInstruction::new(code)),
-        InstructionType::FIN => Box::new(FinishInstruction::new(code)),
-        InstructionType::OUT => Box::new(OutInstruction::new(code)),
-        InstructionType::LD => Box::new(LoadInstruction::new(code)),
-        InstructionType::JMP => Box::new(JumpInstruction::new(code)),
+    match instruction_code {
+        0x01 => Box::new(AddInstruction::new(code)),
+        0x02 => Box::new(SubInstruction::new(code)),
+        0x03 => Box::new(MulInstruction::new(code)),
+        0x04 => Box::new(DivInstruction::new(code)),
+        0x05 => Box::new(JumpInstruction::new(code)),
+        0x06 => Box::new(LoadInstruction::new(code)),
+        0x07 => Box::new(FinishInstruction::new(code)),
+        0x08 => Box::new(OutInstruction::new(code)),
+        0x09 => Box::new(EqualInstruction::new(code)),
+        0x0A => Box::new(LessInstruction::new(code)),
+        0x0B => Box::new(LessEqualInstruction::new(code)),
+        0x0C => Box::new(LoadAbsoluteInstruction::new(code)),
         _ => panic!("Invalid instruction"),
     }
 }

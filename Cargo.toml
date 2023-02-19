@@ -1,7 +1,11 @@
 [package]
-name = "vmachine"
+name = "toy_vmachine"
 version = "0.1.0"
 edition = "2021"
+authors = ["Danila Mishin me@danmishin.ru"]
+license = "MIT"
+description = "A toy virtual machine"
+repository = "https://github.com/JungleTryne/VMachine"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
