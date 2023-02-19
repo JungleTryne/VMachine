@@ -22,16 +22,16 @@ It also provides a basic set of the following instructions:
 | `ADD`       | 0x1  | AddInstruction          |
 | `SUB`       | 0x2  | SubInstruction          |
 | `MUL`       | 0x3  | MulInstruction          |
-| DIV         | 0x4  | DivInstruction          |
-| JMP         | 0x5  | JumpInstruction         |
-| LD          | 0x6  | LoadInstruction         |
-| FIN         | 0x7  | FinishInstruction       |
-| OUT         | 0x8  | OutInstruction          |
-| EQ          | 0x9  | EqualInstruction        |
-| L           | 0xA  | LessInstruction         |
-| LE          | 0xB  | LessEqualInstruction    |
-| LDA         | 0xC  | LoadAbsoluteInstruction |
+| `DIV`       | 0x4  | DivInstruction          |
+| `JMP`       | 0x5  | JumpInstruction         |
+| `LD`        | 0x6  | LoadInstruction         |
+| `FIN`       | 0x7  | FinishInstruction       |
+| `OUT`       | 0x8  | OutInstruction          |
+| `EQ`        | 0x9  | EqualInstruction        |
+| `L`         | 0xA  | LessInstruction         |
+| `LE`        | 0xB  | LessEqualInstruction    |
+| `LDA`       | 0xC  | LoadAbsoluteInstruction |
 
 Each instruction is 32-bit and has unique rules of decoding. To get all information about
 a specific instruction please refer to code documentation of the corresponding class
-for the instruction in `src/vm/instruction.rs`.
+for the instruction in `src/vm/arch/instruction.rs`.

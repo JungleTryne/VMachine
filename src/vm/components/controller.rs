@@ -1,6 +1,7 @@
 use crate::vm::components::display::{Display, SystemDisplay};
 use crate::vm::components::state::{Register, State};
-use crate::vm::arch::{ARCH_BYTES, decoder};
+use crate::vm::arch::ARCH_BYTES;
+use crate::vm::arch::instruction::decode;
 
 /// # Controller
 /// Simulates controller component of the virtual machine
@@ -54,7 +55,7 @@ impl Controller {
 
     fn step(&mut self) {
         let instruction = self.fetch();
-        let command = decoder::decode(instruction);
+        let command = decode(instruction);
         command.execute(self);
         if command.move_ip() {
             self.next();
