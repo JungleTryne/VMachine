@@ -35,7 +35,9 @@ It also provides a basic set of the following instructions:
 | `JCMP`      | 0x0E | JumpCompareInstruction     |
 | `JNCMP`     | 0x0F | JumpNotCompareInstruction  |
 | `OUTR`      | 0x10 | OutFromRegisterInstruction |
-
+| `SKIP`      | 0x11 | SkipInstruction            |
+| `OUTN`      | 0x12 | OutNumberInstruction       |
+| `MOV`       | 0x13 | MoveInstruction            |
 
 Each instruction is 32-bit and has unique rules of decoding. To get all information about
 a specific instruction please refer to code documentation of the corresponding class

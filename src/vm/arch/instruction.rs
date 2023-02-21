@@ -20,7 +20,10 @@ register_instructions! {
     0x0D => InputInstruction,
     0x0E => JumpCompareInstruction,
     0x0F => JumpNotCompareInstruction,
-    0x10 => OutFromRegisterInstruction
+    0x10 => OutFromRegisterInstruction,
+    0x11 => SkipInstruction,
+    0x12 => OutNumberInstruction,
+    0x13 => MoveInstruction
 }
 
 /// # Trait *Instruction*
@@ -42,13 +45,14 @@ pub trait Instruction {
 /// - 1st byte: instruction code
 /// - 2nd byte: [first_register] address
 /// - 3rd byte: [second_register] address
-/// - 4th byte: not used
+/// - 4th byte: [third_register] address
 ///
-/// Result is stored in the [first_register]
+/// Result is stored in the [third_register]
 ///
 pub struct AddInstruction {
     first_register: Register,
     second_register: Register,
+    third_register: Register,
 }
 
 impl AddInstruction {
@@ -56,6 +60,7 @@ impl AddInstruction {
         AddInstruction {
             first_register: Register::from_addr(code[1] as u32),
             second_register: Register::from_addr(code[2] as u32),
+            third_register: Register::from_addr(code[3] as u32),
         }
     }
 }
@@ -65,8 +70,8 @@ impl Instruction for AddInstruction {
         let state = controller.mut_state();
         let first_value = state.register(self.first_register);
         let second_value = state.register(self.second_register);
-        let result = first_value + second_value;
-        state.set_register(self.first_register, result);
+        let (result, _overflow_flag) = first_value.overflowing_add(second_value);
+        state.set_register(self.third_register, result);
     }
 }
 
@@ -78,13 +83,14 @@ impl Instruction for AddInstruction {
 /// - 1st byte: instruction code
 /// - 2nd byte: [first_register] address
 /// - 3rd byte: [second_register] address
-/// - 4th byte: not used
+/// - 4th byte: [third_register] address
 ///
-/// Result is stored in the [first_register]
+/// Result is stored in the [third_register]
 ///
 pub struct SubInstruction {
     first_register: Register,
     second_register: Register,
+    third_register: Register,
 }
 
 impl SubInstruction {
@@ -92,6 +98,7 @@ impl SubInstruction {
         SubInstruction {
             first_register: Register::from_addr(code[1] as u32),
             second_register: Register::from_addr(code[2] as u32),
+            third_register: Register::from_addr(code[3] as u32),
         }
     }
 }
@@ -101,8 +108,8 @@ impl Instruction for SubInstruction {
         let state = controller.mut_state();
         let first_value = state.register(self.first_register);
         let second_value = state.register(self.second_register);
-        let result = first_value - second_value;
-        state.set_register(self.first_register, result);
+        let (result, _overflow_flag) = first_value.overflowing_sub(second_value);
+        state.set_register(self.third_register, result);
     }
 }
 
@@ -114,13 +121,14 @@ impl Instruction for SubInstruction {
 /// - 1st byte: instruction code
 /// - 2nd byte: [first_register] address
 /// - 3rd byte: [second_register] address
-/// - 4th byte: not used
+/// - 4th byte: [third_register] address
 ///
-/// Result is stored in the [first_register]
+/// Result is stored in the [third_register]
 ///
 pub struct MulInstruction {
     first_register: Register,
     second_register: Register,
+    third_register: Register,
 }
 
 impl MulInstruction {
@@ -128,6 +136,7 @@ impl MulInstruction {
         MulInstruction {
             first_register: Register::from_addr(code[1] as u32),
             second_register: Register::from_addr(code[2] as u32),
+            third_register: Register::from_addr(code[3] as u32),
         }
     }
 }
@@ -137,8 +146,8 @@ impl Instruction for MulInstruction {
         let state = controller.mut_state();
         let first_value = state.register(self.first_register);
         let second_value = state.register(self.second_register);
-        let result = first_value * second_value;
-        state.set_register(self.first_register, result);
+        let (result, _overflow_flag) = first_value.overflowing_mul(second_value);
+        state.set_register(self.third_register, result);
     }
 }
 
@@ -150,14 +159,14 @@ impl Instruction for MulInstruction {
 /// - 1st byte: instruction code
 /// - 2nd byte: [first_register] address
 /// - 3rd byte: [second_register] address
-/// - 4th byte: not used
+/// - 4th byte: [third_register] address
 ///
-/// Result of division is stored in the [first_register],
-/// remainder is stored in the [second_register]
+/// Result is stored in the [third_register]
 ///
 pub struct DivInstruction {
     first_register: Register,
     second_register: Register,
+    third_register: Register,
 }
 
 impl DivInstruction {
@@ -165,6 +174,7 @@ impl DivInstruction {
         DivInstruction {
             first_register: Register::from_addr(code[1] as u32),
             second_register: Register::from_addr(code[2] as u32),
+            third_register: Register::from_addr(code[3] as u32),
         }
     }
 }
@@ -180,11 +190,8 @@ impl Instruction for DivInstruction {
             second_value, 0,
             "DivInstruction failure: second register = 0"
         );
-        let result = first_value / second_value;
-        let reminder = first_value % second_value;
-
-        state.set_register(self.first_register, result);
-        state.set_register(self.second_register, reminder);
+        let (result, _overflow_flag) = first_value.overflowing_div(second_value);
+        state.set_register(self.third_register, result);
     }
 }
 
@@ -599,5 +606,88 @@ impl Instruction for OutFromRegisterInstruction {
         let value = char::from_u32(controller.state().register(self.register))
             .expect("Expected char to be in register");
         controller.display().print(value);
+    }
+}
+
+/// # SkipInstruction
+/// Instruction that does nothing
+/// Useful for labels implementation
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: not used
+/// - 3rd byte: not used
+/// - 4th byte: not used
+pub struct SkipInstruction {}
+
+impl SkipInstruction {
+    pub fn new(_code: &[u8]) -> Self {
+        SkipInstruction{}
+    }
+}
+
+impl Instruction for SkipInstruction {
+    fn execute(&mut self, _controller: &mut Controller) {
+        return
+    }
+}
+
+/// # OutNumberInstruction
+/// Outputs a number stored in the [register]
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: [register] address
+/// - 3rd byte: not used
+/// - 4th byte: not used
+pub struct OutNumberInstruction {
+    register: Register
+}
+
+impl OutNumberInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        OutNumberInstruction{
+            register: Register::from_addr(code[1] as u32),
+        }
+    }
+}
+
+impl Instruction for OutNumberInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        let number = controller.state().register(self.register);
+        let number_str = number.to_string();
+        for c in number_str.chars() {
+            controller.display().print(c);
+        }
+    }
+}
+
+/// # MoveInstruction
+/// Copies value from [first_register] to [second_register]
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: [first_register] address
+/// - 3rd byte: [second_register] address
+/// - 4th byte: not used
+///
+pub struct MoveInstruction {
+    first_register: Register,
+    second_register: Register,
+}
+
+impl MoveInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        MoveInstruction {
+            first_register: Register::from_addr(code[1] as u32),
+            second_register: Register::from_addr(code[2] as u32),
+        }
+    }
+}
+
+impl Instruction for MoveInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        let value = controller.state().register(self.first_register);
+        controller.mut_state().set_register(self.second_register, value);
     }
 }
