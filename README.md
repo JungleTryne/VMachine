@@ -1,6 +1,6 @@
 # Toy Virtual Machine
 
-This is a toy virtual machine with fon neyman architecture.
+This is a toy virtual machine with von Neumann architecture.
 
 ## How to run it?
 The machine consumes an image file which it used as a virtual memory device.
