@@ -30,7 +30,6 @@ It also provides a basic set of the following instructions:
 | `EQ`        | 0x09 | EqualInstruction           |
 | `L`         | 0x0A | LessInstruction            |
 | `LE`        | 0x0B | LessEqualInstruction       |
-| `LDA`       | 0x0C | LoadAbsoluteInstruction    |
 | `INP`       | 0x0D | InputInstruction           |
 | `JCMP`      | 0x0E | JumpCompareInstruction     |
 | `JNCMP`     | 0x0F | JumpNotCompareInstruction  |

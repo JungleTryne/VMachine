@@ -1,6 +1,7 @@
 use crate::vm::components::controller::Controller;
 use crate::vm::components::state::Register;
 use byteorder::{ByteOrder, LittleEndian};
+use num::ToPrimitive;
 
 use crate::vm::utils::instruction_macro::register_instructions;
 
@@ -23,7 +24,8 @@ register_instructions! {
     0x10 => OutFromRegisterInstruction,
     0x11 => SkipInstruction,
     0x12 => OutNumberInstruction,
-    0x13 => MoveInstruction
+    0x13 => MoveInstruction,
+    0x14 => InputNumberInstruction
 }
 
 /// # Trait *Instruction*
@@ -257,8 +259,9 @@ impl LoadInstruction {
 
 impl Instruction for LoadInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let ip_value = controller.state().register(Register::IP);
-        let address = ip_value + self.offset as u32;
+        let ip_value = controller.state().register(Register::IP).to_i32().expect("Couldn't convert ip register to i32");
+        let address = ip_value + (self.offset as i32);
+        let address = address.to_u32().expect("Couldn't convert address to u32");
 
         let value = controller
             .mut_state()
@@ -689,5 +692,34 @@ impl Instruction for MoveInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         let value = controller.state().register(self.first_register);
         controller.mut_state().set_register(self.second_register, value);
+    }
+}
+
+
+/// InputNumberInstruction
+/// Gets a number from input and puts it into the [register]
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: [register] address
+/// - 3rd byte: not used
+/// - 4th byte: not used
+///
+pub struct InputNumberInstruction {
+    register: Register,
+}
+
+impl InputNumberInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        InputNumberInstruction {
+            register: Register::from_addr(code[1] as u32),
+        }
+    }
+}
+
+impl Instruction for InputNumberInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        let num = controller.mut_display().get_num();
+        controller.mut_state().set_register(self.register, num);
     }
 }
