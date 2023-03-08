@@ -1,7 +1,7 @@
+use crate::vm::arch::instruction::decode;
+use crate::vm::arch::ARCH_BYTES;
 use crate::vm::components::display::{Display, SystemDisplay};
 use crate::vm::components::state::{Register, State};
-use crate::vm::arch::ARCH_BYTES;
-use crate::vm::arch::instruction::decode;
 
 /// # Controller
 /// Simulates controller component of the virtual machine.
@@ -21,7 +21,7 @@ pub struct Controller {
 
 impl Controller {
     pub fn new(state: State) -> Self {
-        let initial_ip_value = state.register(Register::IP);
+        let initial_ip_value = state.register_value(Register::IP);
         Controller {
             state,
             display: Box::new(SystemDisplay::new()),
@@ -53,8 +53,9 @@ impl Controller {
     }
 
     fn reset_machine(&mut self) {
-        self.state.set_register(Register::IP, self.initial_ip_value);
-        self.state.set_register(Register::END, 0);
+        self.state
+            .set_register_value(Register::IP, self.initial_ip_value);
+        self.state.set_register_value(Register::END, 0);
     }
 
     fn step(&mut self) {
@@ -67,16 +68,17 @@ impl Controller {
     }
 
     fn next(&mut self) {
-        let ip_value = self.state.register(Register::IP);
-        self.state.set_register(Register::IP, ip_value + ARCH_BYTES);
+        let ip_value = self.state.register_value(Register::IP);
+        self.state
+            .set_register_value(Register::IP, ip_value + ARCH_BYTES);
     }
 
     fn fetch(&mut self) -> &[u8] {
-        let ip_value = self.state.register(Register::IP);
+        let ip_value = self.state.register_value(Register::IP);
         self.state.get_memory_handler().read_word(ip_value)
     }
 
     fn is_finished(&self) -> bool {
-        self.state.register(Register::END) != 0
+        self.state.register_value(Register::END) != 0
     }
 }

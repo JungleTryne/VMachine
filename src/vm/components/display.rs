@@ -26,7 +26,6 @@ impl SystemDisplay {
             self.buffer = self.buffer.trim().parse().unwrap();
         }
     }
-
 }
 
 impl Display for SystemDisplay {

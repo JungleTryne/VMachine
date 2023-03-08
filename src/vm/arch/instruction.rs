@@ -25,7 +25,9 @@ register_instructions! {
     0x11 => SkipInstruction,
     0x12 => OutNumberInstruction,
     0x13 => MoveInstruction,
-    0x14 => InputNumberInstruction
+    0x14 => InputNumberInstruction,
+    0x15 => PushToStackInstruction,
+    0x16 => PopFromStackInstruction
 }
 
 /// # Trait *Instruction*
@@ -70,10 +72,10 @@ impl AddInstruction {
 impl Instruction for AddInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         let state = controller.mut_state();
-        let first_value = state.register(self.first_register);
-        let second_value = state.register(self.second_register);
+        let first_value = state.register_value(self.first_register);
+        let second_value = state.register_value(self.second_register);
         let (result, _overflow_flag) = first_value.overflowing_add(second_value);
-        state.set_register(self.third_register, result);
+        state.set_register_value(self.third_register, result);
     }
 }
 
@@ -108,10 +110,10 @@ impl SubInstruction {
 impl Instruction for SubInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         let state = controller.mut_state();
-        let first_value = state.register(self.first_register);
-        let second_value = state.register(self.second_register);
+        let first_value = state.register_value(self.first_register);
+        let second_value = state.register_value(self.second_register);
         let (result, _overflow_flag) = first_value.overflowing_sub(second_value);
-        state.set_register(self.third_register, result);
+        state.set_register_value(self.third_register, result);
     }
 }
 
@@ -146,10 +148,10 @@ impl MulInstruction {
 impl Instruction for MulInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         let state = controller.mut_state();
-        let first_value = state.register(self.first_register);
-        let second_value = state.register(self.second_register);
+        let first_value = state.register_value(self.first_register);
+        let second_value = state.register_value(self.second_register);
         let (result, _overflow_flag) = first_value.overflowing_mul(second_value);
-        state.set_register(self.third_register, result);
+        state.set_register_value(self.third_register, result);
     }
 }
 
@@ -185,15 +187,15 @@ impl Instruction for DivInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         let state = controller.mut_state();
 
-        let first_value = state.register(self.first_register);
-        let second_value = state.register(self.second_register);
+        let first_value = state.register_value(self.first_register);
+        let second_value = state.register_value(self.second_register);
 
         assert_ne!(
             second_value, 0,
             "DivInstruction failure: second register = 0"
         );
         let (result, _overflow_flag) = first_value.overflowing_div(second_value);
-        state.set_register(self.third_register, result);
+        state.set_register_value(self.third_register, result);
     }
 }
 
@@ -221,9 +223,11 @@ impl JumpInstruction {
 
 impl Instruction for JumpInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let ip_value = controller.state().register(Register::IP);
+        let ip_value = controller.state().register_value(Register::IP);
         let address = (ip_value as i32 + self.offset as i32) as u32;
-        controller.mut_state().set_register(Register::IP, address);
+        controller
+            .mut_state()
+            .set_register_value(Register::IP, address);
     }
 
     fn move_ip(&self) -> bool {
@@ -259,7 +263,11 @@ impl LoadInstruction {
 
 impl Instruction for LoadInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let ip_value = controller.state().register(Register::IP).to_i32().expect("Couldn't convert ip register to i32");
+        let ip_value = controller
+            .state()
+            .register_value(Register::IP)
+            .to_i32()
+            .expect("Couldn't convert ip register to i32");
         let address = ip_value + (self.offset as i32);
         let address = address.to_u32().expect("Couldn't convert address to u32");
 
@@ -268,7 +276,9 @@ impl Instruction for LoadInstruction {
             .get_memory_handler()
             .read_byte(address) as u32;
 
-        controller.mut_state().set_register(self.register, value);
+        controller
+            .mut_state()
+            .set_register_value(self.register, value);
     }
 }
 
@@ -292,7 +302,7 @@ impl FinishInstruction {
 
 impl Instruction for FinishInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        controller.mut_state().set_register(Register::END, 1);
+        controller.mut_state().set_register_value(Register::END, 1);
     }
 
     fn move_ip(&self) -> bool {
@@ -324,7 +334,7 @@ impl OutInstruction {
 
 impl Instruction for OutInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let mut address = controller.state().register(self.register);
+        let mut address = controller.state().register_value(self.register);
         loop {
             let char = controller.state().get_memory_handler().read_byte(address) as char;
 
@@ -364,11 +374,11 @@ impl EqualInstruction {
 
 impl Instruction for EqualInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let left_value = controller.state().register(self.left);
-        let right_value = controller.state().register(self.right);
+        let left_value = controller.state().register_value(self.left);
+        let right_value = controller.state().register_value(self.right);
         controller
             .mut_state()
-            .set_register(Register::CMP, (left_value == right_value) as u32);
+            .set_register_value(Register::CMP, (left_value == right_value) as u32);
     }
 }
 
@@ -399,11 +409,11 @@ impl LessInstruction {
 
 impl Instruction for LessInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let left_value = controller.state().register(self.left);
-        let right_value = controller.state().register(self.right);
+        let left_value = controller.state().register_value(self.left);
+        let right_value = controller.state().register_value(self.right);
         controller
             .mut_state()
-            .set_register(Register::CMP, (left_value < right_value) as u32);
+            .set_register_value(Register::CMP, (left_value < right_value) as u32);
     }
 }
 
@@ -434,11 +444,11 @@ impl LessEqualInstruction {
 
 impl Instruction for LessEqualInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let left_value = controller.state().register(self.left);
-        let right_value = controller.state().register(self.right);
+        let left_value = controller.state().register_value(self.left);
+        let right_value = controller.state().register_value(self.right);
         controller
             .mut_state()
-            .set_register(Register::CMP, (left_value <= right_value) as u32);
+            .set_register_value(Register::CMP, (left_value <= right_value) as u32);
     }
 }
 
@@ -470,7 +480,7 @@ impl Instruction for LoadAbsoluteInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         controller
             .mut_state()
-            .set_register(self.register, self.value);
+            .set_register_value(self.register, self.value);
     }
 }
 
@@ -499,7 +509,9 @@ impl InputInstruction {
 impl Instruction for InputInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         let c = controller.mut_display().get();
-        controller.mut_state().set_register(self.register, c as u32);
+        controller
+            .mut_state()
+            .set_register_value(self.register, c as u32);
     }
 }
 
@@ -529,13 +541,15 @@ impl JumpCompareInstruction {
 
 impl Instruction for JumpCompareInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        if controller.state().register(Register::CMP) == 0 {
+        if controller.state().register_value(Register::CMP) == 0 {
             self.success = false;
             return;
         }
-        let ip_value = controller.state().register(Register::IP);
+        let ip_value = controller.state().register_value(Register::IP);
         let address = (ip_value as i32 + self.offset as i32) as u32;
-        controller.mut_state().set_register(Register::IP, address);
+        controller
+            .mut_state()
+            .set_register_value(Register::IP, address);
     }
 
     fn move_ip(&self) -> bool {
@@ -569,13 +583,15 @@ impl JumpNotCompareInstruction {
 
 impl Instruction for JumpNotCompareInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        if controller.state().register(Register::CMP) != 0 {
+        if controller.state().register_value(Register::CMP) != 0 {
             self.success = false;
             return;
         }
-        let ip_value = controller.state().register(Register::IP);
+        let ip_value = controller.state().register_value(Register::IP);
         let address = (ip_value as i32 + self.offset as i32) as u32;
-        controller.mut_state().set_register(Register::IP, address);
+        controller
+            .mut_state()
+            .set_register_value(Register::IP, address);
     }
 
     fn move_ip(&self) -> bool {
@@ -593,20 +609,20 @@ impl Instruction for JumpNotCompareInstruction {
 /// - 4th byte: not used
 ///
 pub struct OutFromRegisterInstruction {
-    register: Register
+    register: Register,
 }
 
 impl OutFromRegisterInstruction {
     pub fn new(code: &[u8]) -> Self {
         OutFromRegisterInstruction {
-            register: Register::from_addr(code[1] as u32)
+            register: Register::from_addr(code[1] as u32),
         }
     }
 }
 
 impl Instruction for OutFromRegisterInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let value = char::from_u32(controller.state().register(self.register))
+        let value = char::from_u32(controller.state().register_value(self.register))
             .expect("Expected char to be in register");
         controller.display().print(value);
     }
@@ -625,13 +641,13 @@ pub struct SkipInstruction {}
 
 impl SkipInstruction {
     pub fn new(_code: &[u8]) -> Self {
-        SkipInstruction{}
+        SkipInstruction {}
     }
 }
 
 impl Instruction for SkipInstruction {
     fn execute(&mut self, _controller: &mut Controller) {
-        return
+        return;
     }
 }
 
@@ -644,12 +660,12 @@ impl Instruction for SkipInstruction {
 /// - 3rd byte: not used
 /// - 4th byte: not used
 pub struct OutNumberInstruction {
-    register: Register
+    register: Register,
 }
 
 impl OutNumberInstruction {
     pub fn new(code: &[u8]) -> Self {
-        OutNumberInstruction{
+        OutNumberInstruction {
             register: Register::from_addr(code[1] as u32),
         }
     }
@@ -657,7 +673,7 @@ impl OutNumberInstruction {
 
 impl Instruction for OutNumberInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let number = controller.state().register(self.register);
+        let number = controller.state().register_value(self.register);
         let number_str = number.to_string();
         for c in number_str.chars() {
             controller.display().print(c);
@@ -690,11 +706,12 @@ impl MoveInstruction {
 
 impl Instruction for MoveInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let value = controller.state().register(self.first_register);
-        controller.mut_state().set_register(self.second_register, value);
+        let value = controller.state().register_value(self.first_register);
+        controller
+            .mut_state()
+            .set_register_value(self.second_register, value);
     }
 }
-
 
 /// InputNumberInstruction
 /// Gets a number from input and puts it into the [register]
@@ -720,6 +737,62 @@ impl InputNumberInstruction {
 impl Instruction for InputNumberInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         let num = controller.mut_display().get_num();
-        controller.mut_state().set_register(self.register, num);
+        controller
+            .mut_state()
+            .set_register_value(self.register, num);
+    }
+}
+
+/// PushToStackInstruction
+/// Pushes a value from [register] onto stack
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: [register] address
+/// - 3rd byte: not used
+/// - 4th byte: not used
+///
+pub struct PushToStackInstruction {
+    register: Register,
+}
+
+impl PushToStackInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        PushToStackInstruction {
+            register: Register::from_addr(code[1] as u32),
+        }
+    }
+}
+
+impl Instruction for PushToStackInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        controller.mut_state().push_to_stack(self.register);
+    }
+}
+
+/// PopFromStackInstruction
+/// Pops a value from stack onto register
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: [register address]
+/// - 3rd byte: not used
+/// - 4th byte: not used
+///
+pub struct PopFromStackInstruction {
+    register: Register,
+}
+
+impl PopFromStackInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        PopFromStackInstruction {
+            register: Register::from_addr(code[1] as u32),
+        }
+    }
+}
+
+impl Instruction for PopFromStackInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        controller.mut_state().pop_from_stack(self.register);
     }
 }
