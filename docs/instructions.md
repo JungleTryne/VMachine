@@ -11,6 +11,7 @@ All the registers can store 32-bit values.
 | `R3`     | General-purpose register       | 0x10    | 32 bits  |
 | `CMP`    | Register for comparison result | 0x14    | 32 bits  |
 | `END`    | Execution halt flag            | 0x18    | 32 bits  |
+| `SP`     | Stack pointer                  | 0x1C    | 32 bits  |
 
 All of them are stored in virtual memory at the
 addresses mentioned above.
@@ -37,6 +38,9 @@ It also provides a basic set of the following instructions:
 | `SKIP`      | 0x11 | SkipInstruction            |
 | `OUTN`      | 0x12 | OutNumberInstruction       |
 | `MOV`       | 0x13 | MoveInstruction            |
+| `INPN`      | 0x14 | InputNumberInstruction     |
+| `PUSH`      | 0x15 | PushToStackInstruction     |
+| `POP`       | 0x16 | PopFromStackInstruction    |
 
 Each instruction is 32-bit and has unique rules of decoding. To get all information about
 a specific instruction please refer to code documentation of the corresponding class
