@@ -52,6 +52,12 @@ impl Controller {
         self.display.as_mut()
     }
 
+    pub fn jump(&mut self, offset: i16) {
+        let ip_value = self.state().register_value(Register::IP);
+        let address = (ip_value as i32 + offset as i32) as u32;
+        self.mut_state().set_register_value(Register::IP, address);
+    }
+
     fn reset_machine(&mut self) {
         self.state
             .set_register_value(Register::IP, self.initial_ip_value);

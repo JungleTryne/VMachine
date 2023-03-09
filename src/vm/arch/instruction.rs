@@ -27,7 +27,8 @@ register_instructions! {
     0x13 => MoveInstruction,
     0x14 => InputNumberInstruction,
     0x15 => PushToStackInstruction,
-    0x16 => PopFromStackInstruction
+    0x16 => PopFromStackInstruction,
+    0x17 => CallInstruction
 }
 
 /// # Trait *Instruction*
@@ -223,11 +224,7 @@ impl JumpInstruction {
 
 impl Instruction for JumpInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let ip_value = controller.state().register_value(Register::IP);
-        let address = (ip_value as i32 + self.offset as i32) as u32;
-        controller
-            .mut_state()
-            .set_register_value(Register::IP, address);
+        controller.jump(self.offset);
     }
 
     fn move_ip(&self) -> bool {
@@ -794,5 +791,33 @@ impl PopFromStackInstruction {
 impl Instruction for PopFromStackInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         controller.mut_state().pop_from_stack(self.register);
+    }
+}
+
+/// CallInstruction
+/// Calls an instruction on address [ip_value + offset]
+/// [offset] is parsed as i16
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: offset
+/// - 3rd byte: offset
+/// - 4th byte: not used
+pub struct CallInstruction {
+    offset: i16,
+}
+
+impl CallInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        CallInstruction {
+            offset: LittleEndian::read_i16(&code[1..=2]),
+        }
+    }
+}
+
+impl Instruction for CallInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        controller.mut_state().push_to_stack(Register::IP);
+        controller.jump(self.offset);
     }
 }
