@@ -28,7 +28,8 @@ register_instructions! {
     0x14 => InputNumberInstruction,
     0x15 => PushToStackInstruction,
     0x16 => PopFromStackInstruction,
-    0x17 => CallInstruction
+    0x17 => CallInstruction,
+    0x18 => RetInstruction
 }
 
 /// # Trait *Instruction*
@@ -819,5 +820,37 @@ impl Instruction for CallInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         controller.mut_state().push_to_stack(Register::IP);
         controller.jump(self.offset);
+    }
+
+    fn move_ip(&self) -> bool {
+        false
+    }
+}
+
+/// RetInstruction
+/// Instruction that returns IP register to the value
+/// for the stack. Should be used only when [CallInstruction]
+/// was called previously
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: not used
+/// - 3rd byte: not used
+/// - 4th byte: not used
+pub struct RetInstruction {}
+
+impl RetInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        RetInstruction {}
+    }
+}
+
+impl Instruction for RetInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        let ip_value = controller.mut_state().pop_from_stack(Register::IP);
+    }
+
+    fn move_ip(&self) -> bool {
+        false
     }
 }
