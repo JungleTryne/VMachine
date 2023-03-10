@@ -840,14 +840,14 @@ impl Instruction for CallInstruction {
 pub struct RetInstruction {}
 
 impl RetInstruction {
-    pub fn new(code: &[u8]) -> Self {
+    pub fn new(_code: &[u8]) -> Self {
         RetInstruction {}
     }
 }
 
 impl Instruction for RetInstruction {
     fn execute(&mut self, controller: &mut Controller) {
-        let ip_value = controller.mut_state().pop_from_stack(Register::IP);
+        controller.mut_state().pop_from_stack(Register::IP);
     }
 
     fn move_ip(&self) -> bool {
