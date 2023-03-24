@@ -54,7 +54,7 @@ impl Controller {
 
     pub fn jump_abs(&mut self, ip_value: u32) {
         self.mut_state()
-            .set_register_value(Register::R0, ip_value);
+            .set_register_value(Register::IP, ip_value);
     }
 
     pub fn jump(&mut self, offset: i16) {

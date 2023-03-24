@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::io;
 use std::io::Write;
 use std::str::FromStr;
@@ -9,21 +10,25 @@ pub trait Display {
 }
 
 pub struct SystemDisplay {
-    buffer: String,
+    buffer: VecDeque<char>,
 }
 
 #[allow(clippy::new_without_default)]
 impl SystemDisplay {
     pub fn new() -> Self {
         SystemDisplay {
-            buffer: String::new(),
+            buffer: VecDeque::new(),
         }
     }
 
     fn check_fill_buffer(&mut self) {
         if self.buffer.is_empty() {
-            let _ = io::stdin().read_line(&mut self.buffer).unwrap();
-            self.buffer = self.buffer.trim().parse().unwrap();
+            let mut line = String::new();
+            let _ = io::stdin().read_line(&mut line).unwrap();
+            let line = line.trim();
+            for c in line.chars() {
+                self.buffer.push_back(c);
+            }
         }
     }
 }
@@ -36,14 +41,14 @@ impl Display for SystemDisplay {
 
     fn get(&mut self) -> char {
         self.check_fill_buffer();
-        self.buffer.pop().unwrap()
+        self.buffer.pop_front().unwrap()
     }
 
     fn get_num(&mut self) -> u32 {
         self.check_fill_buffer();
 
-        let line = self.buffer.clone();
-        self.buffer = String::new();
+        let line: String = self.buffer.clone().into_iter().collect();
+        self.buffer = VecDeque::new();
 
         println!("Got number: {}", line);
 
