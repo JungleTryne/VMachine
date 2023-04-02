@@ -16,4 +16,4 @@ store a backup of the image before executing the machine.
 
 ## What is the architecture of the machine?
 To learn about all the instructions and registers available, refer to 
-[this doc](docs/instructions.md)
+[this doc](docs/instructions.md). For calling conventions refer to [this doc](docs/instructions.md) 

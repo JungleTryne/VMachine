@@ -41,6 +41,8 @@ It also provides a basic set of the following instructions:
 | `INPN`      | 0x14 | InputNumberInstruction     |
 | `PUSH`      | 0x15 | PushToStackInstruction     |
 | `POP`       | 0x16 | PopFromStackInstruction    |
+| `CALL`      | 0x17 | CallInstruction            |
+| `RET`       | 0x18 | RetInstruction             |
 
 Each instruction is 32-bit and has unique rules of decoding. To get all information about
 a specific instruction please refer to code documentation of the corresponding class
