@@ -849,8 +849,4 @@ impl Instruction for RetInstruction {
     fn execute(&mut self, controller: &mut Controller) {
         controller.mut_state().pop_from_stack(Register::IP);
     }
-
-    fn move_ip(&self) -> bool {
-        false
-    }
 }

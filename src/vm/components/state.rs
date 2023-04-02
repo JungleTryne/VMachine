@@ -33,12 +33,13 @@ impl State {
     }
 
     pub fn pop_from_stack(&mut self, register: Register) {
-        let sp_value = self.register_value(Register::SP);
-        let mut stack_value = self.memory.read_word(sp_value);
+        let sp_value = self.register_value(Register::SP) - ARCH_BYTES;
+        self.set_register_value(Register::SP, sp_value);
 
+        let mut stack_value = self.memory.read_word(sp_value);
         let stack_value = stack_value.read_u32::<LittleEndian>().unwrap();
+
         self.set_register_value(register, stack_value);
-        self.set_register_value(Register::SP, sp_value - ARCH_BYTES);
     }
 
     pub fn push_to_stack(&mut self, register: Register) {
