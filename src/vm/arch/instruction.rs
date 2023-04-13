@@ -850,3 +850,35 @@ impl Instruction for RetInstruction {
         controller.mut_state().pop_from_stack(Register::IP);
     }
 }
+
+/// DerefInstruction
+///
+/// Structure:
+/// - 1st byte: instruction code
+/// - 2nd byte: destination register address
+/// - 3rd byte: source register address to dereference
+/// - 4th byte: offset
+pub struct DerefInstruction {
+    dest: Register,
+    source: Register,
+    offset: i8,
+}
+
+impl DerefInstruction {
+    pub fn new(code: &[u8]) -> Self {
+        DerefInstruction {
+            dest: Register::from_addr(code[1] as u32),
+            source: Register::from_addr(code[2] as u32),
+            offset: code[3] as i8,
+        }
+    }
+}
+
+impl Instruction for DerefInstruction {
+    fn execute(&mut self, controller: &mut Controller) {
+        let addr = controller.state().register_value(self.source) as i32;
+        let addr = addr + self.offset as i32;
+        let value = controller.state().get_memory_handler().read_word(addr as u32).to_owned();
+        controller.mut_state().get_mut_memory_handler().write_word(self.dest.as_addr(), &value);
+    }
+}

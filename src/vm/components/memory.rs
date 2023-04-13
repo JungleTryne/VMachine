@@ -42,6 +42,14 @@ impl VirtualMemory {
         let addr = addr as usize;
         &self.base_pointer[addr..(addr + ARCH_BYTES as usize)]
     }
+
+    pub fn write_word(&mut self, addr: u32, value: &[u8]) {
+        assert_eq!(addr % ARCH_BYTES, 0, "The word address is not aligned");
+        let addr = addr as usize;
+        for i in 0..ARCH_BYTES as usize {
+            self.base_pointer[addr + i] = value[i];
+        }
+    }
 }
 
 #[cfg(test)]

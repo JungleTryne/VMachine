@@ -67,4 +67,8 @@ impl State {
     pub fn get_memory_handler(&self) -> &VirtualMemory {
         &self.memory
     }
+
+    pub fn get_mut_memory_handler(&mut self) -> &mut VirtualMemory {
+        &mut self.memory
+    }
 }
